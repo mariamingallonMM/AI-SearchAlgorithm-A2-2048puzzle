@@ -1,8 +1,8 @@
-from Grid       import Grid
+from Grid import Grid
 from ComputerAI import ComputerAI
-from PlayerAI   import PlayerAI
-from Displayer  import Displayer
-from random       import randint
+from PlayerAI import PlayerAI
+from Displayer import Displayer
+from random import randint
 import time
 
 defaultInitialTiles = 2

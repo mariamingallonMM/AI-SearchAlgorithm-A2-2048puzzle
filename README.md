@@ -1,5 +1,6 @@
 # AI-SearchAlgorithm-A2-2048puzzle
 Create an agent to intelligently play the 2048-puzzle game.
+Try playing here: http://ovolve.github.io/2048-AI/
 
 
 The skeleton code includes the following files. Note that you will only be working in one of them, and the rest of them are read-only:
