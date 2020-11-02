@@ -3,160 +3,216 @@ from BaseAI import BaseAI
 from typing import Tuple, List
 from Grid import Grid
 from sys import maxsize as MAX_INT
+import math
 
 class PlayerAI(BaseAI):
     
-    def utility(self) -> int:
-            """
-            Next, we create a utility method. This method evaluates “how good” our game grid is. There could be many possible choices for this, but here we use the following metric: 
-              sum all the elements of the matrix and divide by the number of non-zero elements.
-
-            """
-
-            count = 0
-            sum = 0
-            for i in range(4):
-                for j in range(4):
-                    sum += self.map[i][j]
-                    if self.map[i][j] != 0:
-                        count += 1
-            return int(sum/count)
-
-    
-    def getChildren(self, grid):
-        #gets all children and the moving directions
-        allmoves = [0,1,2,3]
+    def getChildren(self, grid, minmax: str):
+        """gets all children and the moving directions for max player
+           gets all empty cells and attempts new tiles configurations for "2" and "4" for min player
+        """
         children = []
         moving = []
-        for m in allmoves:
-            gridcopy = grid
-            moved = gridcopy.move(m)
-            #move method returns True if moved and makes the change to gridcopy itself
-            if moved == True:
+
+        if minmax == "max":
+            #clone the current grid here to avoid loosing it after .move()
+            gridcopy = grid.clone()
+            for direction in grid.getAvailableMoves():
+                moved = gridcopy.move(direction)
+                #move method returns True if moved and makes the change to gridcopy itself
+                if moved == True:
+                    children.append(gridcopy)
+                    moving.append(direction)
+            return list(zip(children, moving))
+        if minmax == "min":
+            #clone the current grid here to avoid loosing it after .move()
+            gridcopy = grid.clone()
+            for cell in grid.getAvailableCells():
+                #insert a new tile "2" in empty cell to cover this posibility
+                gridcopy.insertTile(cell, 2)
                 children.append(gridcopy)
-                moving.append(m)
+            #restart the grid object to get branches for new tile "4"
+            gridcopy = grid.clone()
+            for cell in grid.getAvailableCells():
+                #insert a new tile "4" in empty cell to cover this posibility
+                move_4 = gridcopy.insertTile(cell, 4)
+                children.append(gridcopy)
             return children
-        
-    #define Max player to be PlayerAI
-    def maximise(self, state: Grid, a: int, b: int, d: int):  #-> Tuple[grid, int]:
+
+
+    def middle(self, L) -> int:
+        L = sorted(L)
+        n = int(len(L)/2)
+        m = int((n - 1) / 2)
+        return int((L[n] + L[m]) / 2)
+
+    #def utility(self, grid) -> int:
+    #    """
+    #    This method evaluates “how good” our game grid is by calculating the averageTileNumber as 
+    #    the sum all the elements of the matrix and divide by the number of non-zero elements.
+    #    """
+    #    count = 0
+    #    sum = 0
+    #    weight_1 = 60
+    #    weight_2 = 20
+    #    tilenum = []
+    #    for i in range(grid.size):
+    #        for j in range(grid.size):
+    #            sum += grid.map[i][j]
+    #            tilenum.append(grid.map[i][j])
+    #            if grid.map[i][j] != 0:
+    #                count += 1
+    #    tilemedian = self.middle(tilenum)    
+    #    return int(weight_1 * (sum/count) + weight_2 * tilemedian)
+
+    
+    
+    def maximise(self, grid: Grid, a: int, b: int, d: int):  #-> Tuple[grid, int]:
 
         """
-        The function maximise from the minimax algorithm takes the following parameters:
-        state: is an object of the Grid class
+        This is the max method representing PlayerAI from the minimax algorithm takes the following parameters:
+        grid: is an object of the Grid class
         a: alpha from α-β pruning
         b: beta from α-β pruning
         d: maximum allowed depth
-        returns: a tuple of the form (maxChild, maxUtility), where:
-                    maxChild is the children of the current state object (in the minimax algorithm tree) 
+        returns: a tuple of the form (maxChild, maxUtility, move), where:
+                    maxChild is the children of the current grid object (in the minimax algorithm tree) 
                     that maximizes the utility, and 
-                    maxUtility is the utility value of maxChild game state.
+                    maxUtility is the utility value of maxChild game grid.
+                    move is the move of the child object
         """
+        # at the beginning we set maxUtility to the min it can be "-1" and maxChild to None
+        (maxChild, maxUtility, move) = (None, -1, -1)
+
         if d == 0:
-            return heuristic(state)
-        if not state.canMove():
-            return heuristic(state)
-        
-        # at the beginning we set maxUtility to the min it can be, ie. < 0
-        # and maxChild to None
-        (maxChild, maxUtility) = (None, -1)
+            return (None, self.utility(grid), 0)
+        if not grid.canMove():
+            return (None, self.utility(grid), -1)
+        d -= 1
 
-
-        # get children of current state
-        children = self.getChildren(state)
+        #if no children are generated, stop here
+        if not self.getChildren(grid, "max"):
+            return (maxChild, maxUtility, -1)
 
         # iterate on children to find child with minimum  utility value
-        for child in children:
-            grid = state
-            #state.move()
-            #child.utility()      
-            (_, utility) = self.minimise(grid, a, b, d)
+        for child, dir in self.getChildren(grid, "max"):
+            move = dir
+            #get the utility of the minimise method on the child grid
+            (_, utility) = self.minimise(child, a, b, d)
             if utility > maxUtility:
-                (maxChild, maxUtility) = (grid, utility)
+                (maxChild, maxUtility, move) = (child, utility, dir)
             if maxUtility >= b:
+                return (maxChild, maxUtility, move)
                 break
             if maxUtility > a:
                 a = maxUtility
-        return (maxChild, maxUtility)
+                return (maxChild, maxUtility, move)
 
-    def minimise(self, state: Grid, a: int, b: int, d: int):  #-> Tuple[grid, int]:
+    def minimise(self, grid: Grid, a: int, b: int, d: int):  #-> Tuple[grid, int]:
 
         """
-        The function minimise from the minimax algorithm takes the following parameters:
-
-        state: is an object of the Grid class
+        This is the min method from the minimax algorithm representing the ComputerAI player
+        and takes the following parameters:
+        grid: is an object of the Grid class
         a: alpha from α-β pruning
         b: beta from α-β pruning
         d: maximum allowed depth
 
         returns: a tuple of the form (minChild, minUtility), where:
-                    minChild is the children of the current state object (in the minimax algorithm tree) 
+                    minChild is the children of the current grid object (in the minimax algorithm tree) 
                     that minimises the utility, and 
-                    minUtility is the utility value of minChild game state.
+                    minUtility is the utility value of minChild game grid.
         """
 
-        # at the begining we set minUtility to the max it can be considering the result of the maximise function
-        # we set it up to 'MAX_INT'
-        # and minChild to None
+        # at the begining we set minUtility to the max it can be ('MAX_INT') and minChild to None
         (minChild, minUtility) = (None, MAX_INT)
 
-        # get children of current state
-        children = state.getAvailableCells()
+        if d == 0:
+            return (None, self.utility(grid))
+        if not grid.canMove():
+            return (None, self.utility(grid))
+        d -= 1
+
+        # no children are obtained, stop here
+        if not self.getChildren(grid, "min"):
+            return (minChild, minUtility)
+        
         # iterate on children to find child with minimum utility value
-        for child in children:
-            grid = state
-            #state.move()
-            #child.utility()      
-            (_, utility) = self.maximise(grid, a, b, d)
-            if utility > minUtility:
-                (minChild, minUtility) = (grid, utility)
+        for child in self.getChildren(grid, "min"):
+            (_, utility, _) = self.maximise(child, a, b, d)
+            if utility < minUtility:
+                (minChild, minUtility) = (child, utility)
             if minUtility <= a:
+                return (minChild, minUtility)
                 break
             if minUtility < b:
                 b = minUtility
+                return (minChild, minUtility)
 
-        return (minChild, minUtility)
+    #TODO: try to improve utility function heuristics
+    # add limit for time and maybe try different d values
+    def utility(self, grid) -> int:
+        #Try to keep largest tile on top left and others in decreasing order from left to right
+        emptyTiles = 0
+        list_tiles = []
 
+        for i in range(grid.size):
+            for j in range(grid.size):
+                if grid.map[i][j] == 0:
+                    emptyTiles += 1
+                    list_tiles.append(grid.map[i][j])
+      
+        if list_tiles:
+            maxTile = max(list_tiles)
+        else:
+            maxTile = 0
 
-
-    #TODO: check heuristic function
-    def heuristic(grid):
-        #Try to keep largest tile in top left and others in decreasing order from left to right
-        emptyTiles = len([i for i, x in enumerate(grid) if x == 0])
-        maxTile = max(grid)
         MergeBonus = 0
         OrderBonus = 0
         Ord = 0
         penalty = 0
-        ##weights = [10,8,7,6.5,.5,.7,1,3,-.5,-1.5,-1.8,-2,-3.8,-3.7,-3.5,-3]
-        weights = [65536,32768,16384,8192,512,1024,2048,4096,256,128,64,32,2,4,8,16]
-        if maxTile == grid[0]:
-            Ord += (math.log(grid[0])/math.log(2))*weights[0]
-        for i in xrange(16):
-            if grid[i] >= 8:
-                Ord += weights[i]*(math.log(grid[i])/math.log(2))
-            ##if i < 4 and grid[i] == 0 :
-                ###Ord -=weights[i]*(math.log(maxTile)/math.log(2))
-        return Ord/(16-emptyTiles)
+        #weights = [[10,8,7,6.5],
+        #           [.5,.7,1,3],
+        #           [-.5,-1.5,-1.8,-2],
+        #           [-3.8,-3.7,-3.5,-3]]
 
-        orig_grid = [[0] * 4 for i in xrange(4)]
+        weights = [[65536,32768,16384,8192],
+                   [512,1024,2048,4096],
+                   [256,128,64,32],
+                   [2,4,8,16]]
+        #corner item 
+        #i_corner = grid.size - 1
+        i_corner = 0
+
+        if maxTile == grid.map[i_corner][i_corner] and maxTile != 0:
+            Ord += (math.log(grid.map[i_corner][i_corner])/math.log(2))*weights[i_corner][i_corner]
+        for i in range(grid.size):
+            for j in range(grid.size):
+                if grid.map[i][j] >= 8:
+                    Ord += weights[i][j]*(math.log(grid.map[i][j])/math.log(2))
+            #if i < 4 and grid[i] == 0 :
+                ##Ord -=weights[i]*(math.log(maxTile)/math.log(2))
+            return int(Ord/(16-emptyTiles))
+
+        orig_grid = [[0] * grid.size for i in range(grid.size)]
         k = 0
-        for i in range(4):
-            for j in range(4):
-                orig_grid[i][j] = grid[k]
+        for i in range(grid.size):
+            for j in range(grid.size):
+                orig_grid[i][j] = grid.map[k]
                 k += 1
         sm = 0
-        for i in range(4):
-            for j in range(4):
+        for i in range(grid.size):
+            for j in range(grid.size):
                 if orig_grid[i][j] != 0:
                     val = math.log(orig_grid[i][j])/math.log(2)
-                    for k in range(3-j):
+                    for k in range(grid.size -1 -j):
                         nextright = orig_grid[i][j+k+1]
                         if nextright != 0:
                             rightval = math.log(nextright)/math.log(2)
                             if rightval != val:
                                 sm -= math.fabs(rightval - val)
                                 break
-                    for k in range(3-i):
+                    for k in range(grid.size -1 -i):
                         nextdown = orig_grid[i+k+1][j]
                         if nextdown != 0:
                             downval = math.log(nextdown)/math.log(2)
@@ -169,10 +225,10 @@ class PlayerAI(BaseAI):
         left = 0
         right = 0
         
-        for i in range(4):
+        for i in range(grid.size):
             j = 0
             k = j+1
-            while k < 4:
+            while k < grid.size:
                 if orig_grid[i][k] == 0:
                     k += 1
                 else:
@@ -187,10 +243,10 @@ class PlayerAI(BaseAI):
                         down += curr - nextval
                 j = k
                 k += 1
-        for j in range(4):
+        for j in range(grid.size):
             i = 0
             k = i+1
-            while k < 4:
+            while k < grid.size:
                 if orig_grid[j][k] == 0:
                     k += 1
                 else:
@@ -206,27 +262,11 @@ class PlayerAI(BaseAI):
                 i = k
                 k += 1
         nm = max(up,down) + max(left,right)
-        return 0.1*sm+mn+math.log(maxTile)/math.log(2)+ emptyTiles
+        return int(0.1*sm+mn+math.log(maxTile)/math.log(2)+ emptyTiles)
 
-    def getMoveTo(self, grid) -> int:
-        if grid.canMove([0]):
-            g = Grid()
-            g.move(0)
-            if g == grid:
-                return 0
-        if grid.canMove([1]):
-            g = Grid()
-            g.move(1)
-            if g == grid:
-                return 1
-        if grid.canMove([2]):
-            g = Grid()
-            g.move(2)
-            if g == grid:
-                return 2
-        return 3
-
-    def getMove(self, grid: Grid, depth: int = 1):
-        (child, _) = self.maximise(grid, -1, MAX_INT, depth)
-        return self.getMoveTo(child)
-        #return moves[randint(0, len(moves) - 1)] if moves else None
+    
+    def getMove(self, grid: Grid, depth: int = 5) -> int:
+        (child, utility, bestmove) = self.maximise(grid, -1, MAX_INT, depth)
+        print("utility: ", utility, sep=' ')
+        print("bestmove: ", bestmove, sep=' ')
+        return bestmove

@@ -45,10 +45,10 @@ class GameManager:
         if currTime - self.prevTime > timeLimit + allowance:
             self.over = True
         else:
-            while time.clock() - self.prevTime < timeLimit + allowance:
+            while time.process_time() - self.prevTime < timeLimit + allowance:
                 pass
 
-            self.prevTime = time.clock()
+            self.prevTime = time.process_time()
 
     def start(self):
         for i in range(self.initTiles):
