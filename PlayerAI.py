@@ -16,6 +16,7 @@ class PlayerAI(BaseAI):
     def getChildren(self, grid, minmax: str) -> Tuple[Grid, int]:
         """gets all children and the moving directions for max player
            gets all empty cells and attempts new tiles configurations for "2" and "4" for min player
+           TODO: Why does getChildren produce the same childs? dir appears to be working correctly, check when gridcopy is assigned
         """
         children = []
         moving = []
@@ -29,6 +30,7 @@ class PlayerAI(BaseAI):
                 if moved == True:
                     children.append(gridcopy)
                     moving.append(direction)
+                    print("this is a max child", gridcopy.map)
             return list(zip(children, moving))
         if minmax == "min":
             for cell in grid.getAvailableCells():
@@ -83,10 +85,10 @@ class PlayerAI(BaseAI):
                 tileval.append(grid.map[i][j])
                 if grid.map[i][j] != 0:
                     count += 1
-                adjCellValue = gridCopy.getCellValue((i + gridCopy.move(0), j + gridCopy.move(1)))
-                #compare gridCopy after move to the previous grid
-                if adjCellValue == grid.map[i][j]:
-                    adjCellCount += 1
+                    adjCellValue = gridCopy.getCellValue((i + gridCopy.move(0), j + gridCopy.move(1)))
+                    #compare gridCopy after move to the previous grid
+                    if adjCellValue == grid.map[i][j]:
+                        adjCellCount += 1
                     
         max_tile = max(tileval)
         tilemedian = self.middle(tileval)
