@@ -22,6 +22,7 @@ class PlayerAI(BaseAI):
 
         if minmax == "max":
             for direction in grid.getAvailableMoves():
+                #print(grid.getAvailableMoves())
                 #clone the current grid here to avoid loosing it after .move()
                 gridcopy = grid.clone()
                 #move method returns True if moved and makes the change to gridcopy itself
@@ -31,7 +32,7 @@ class PlayerAI(BaseAI):
                     moving.append(direction)
                     scores.append(self.utility(gridcopy))
             evaluated = list(zip(scores, children, moving))
-            sorted(evaluated, key=lambda x: x[0])
+            sorted(evaluated, key=lambda x: x[0], reverse=False)
             return evaluated
         if minmax == "min":
             for cell in grid.getAvailableCells():
@@ -64,8 +65,13 @@ class PlayerAI(BaseAI):
         """
         #how many tiles are non-zero
         count = 0
+        #how many tiles are zero
+        count_0 = 0
         #sum all the tiles which are non-zero
         sum = 0
+        #sum all tiles per column
+        sum_col = 0
+        sum_cols = []
         #list of all tile values
         tileval = []
         #count number of cells with adjacent values being same
@@ -74,10 +80,11 @@ class PlayerAI(BaseAI):
         #clone the current grid to avoid modifying after using .move() on it
         gridCopy = grid.clone()
         #establish weights for each heuristics
-        w1 = 4
-        w2 = 1
-        w3 = 2
-        w4 = 10
+        w1 = 10
+        w2 = 0
+        w3 = 2000 #weight for tile of max value
+        w4 = 0
+        w5 = 10000 #weight for number of zeros
 
         for i in range(grid.size):
             for j in range(grid.size):
@@ -85,22 +92,16 @@ class PlayerAI(BaseAI):
                 tileval.append(grid.map[i][j])
                 if grid.map[i][j] != 0:
                     count += 1
-                    for m in range(1):
-                        #store gridCopy after move to pass same grid layout to getCellValue, i, j
-                        x = gridCopy.move(m)
-                        adjCellValue = gridCopy.getCellValue((i + x, j + x))
-                        #compare gridCopy after move to the previous grid
-                        if adjCellValue == grid.map[i][j] * 2:
-                            adjCellCount += 1
-                            adjCellValues.append(adjCellValue)
-                        score = (m, adjCellCount, adjCellValues)
-                        #clone the current grid to avoid modifying after using .move() on it
-                        gridCopy = grid.clone()
-        max_tile = max(max(tileval, key= tileval.count), 1)
-        tilemedian = max(self.middle(tileval), 1)
-        max_adjCellCount = max(score[2])
-        adjCellCount = max(adjCellCount, 1)
-        return int(w1 * math.log10(sum/count) + w2 * math.log10(tilemedian) + w3 * math.log10(max_tile) + w4 * math.log10(adjCellCount + max_adjCellCount))
+                if grid.map[i][j] == 0:
+                    count_0 += 1
+                sum_col += sum
+                sum_cols.append(sum_col)
+        max_tile = max(tileval)
+        upleft_corner = grid.map[0][0]
+        sum_corners = grid.map[0][0]+(grid.map[0][1]+grid.map[1][0])
+        max_sum_cols = 0 #max(sum(grid.map[0]),sum(grid.map[1]),sum(grid.map[2]),sum(grid.map[3]))
+
+        return int(w1 * (sum) + w2* sum_corners + w3 * (max_tile) + w4 * upleft_corner + w5 * count_0) #+ w4 * (adjCellCount + max_adjCellCount)
 
     
     def maximise(self, grid: Grid, a: int, b: int, d: int)-> Tuple[Grid, int, int]:
@@ -188,7 +189,7 @@ class PlayerAI(BaseAI):
                 return (minChild, minUtility)
 
 
-    def getMove(self, grid: Grid, depth: int = 4) -> int:
+    def getMove(self, grid: Grid, depth: int = 10) -> int:
          timeLimit = 0.2
          prevTime = time.process_time()
          while time.process_time() - prevTime < timeLimit:
