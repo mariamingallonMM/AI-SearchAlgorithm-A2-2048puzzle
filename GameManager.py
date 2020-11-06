@@ -60,7 +60,7 @@ class GameManager:
         turn = PLAYER_TURN
         maxTile = 0
 
-        self.prevTime = time.clock()
+        self.prevTime = time.process_time()
 
         while not self.isGameOver() and not self.over:
             # Copy to Ensure AI Cannot Change the Real Grid to Cheat
@@ -102,7 +102,7 @@ class GameManager:
                 self.displayer.display(self.grid)
 
             # Exceeding the Time Allotted for Any Turn Terminates the Game
-            self.updateAlarm(time.clock())
+            self.updateAlarm(time.process_time())
 
             turn = 1 - turn
         print(maxTile)
