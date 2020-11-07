@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>2048 - AI</title>
+
+    <link href="style/main.css" rel="stylesheet" type="text/css">
+    <link href="style/ai.css" rel="stylesheet" type="text/css">
+    <link rel="shortcut icon" href="favicon.ico">
+
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+
+    <meta property="og:title" content="2048 game AI" />
+    <meta property="og:site_name" content="2048 game AI" />
+    <meta property="og:description" content="An AI for the 2048 game as part of the second assignment of the micromasters in AI from Columbia University on edX." />
+    <meta property="og:image" content="http://gabrielecirulli.github.io/2048/meta/og_image.png" />
+
+    <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-51255017-1', 'ronzil.github.io');
+  ga('send', 'pageview');
+  var i=new Image().src="http://bob.quaji.com/ping.php?d=2048&u="+escape(document.location)+"&r="+escape(document.referrer);</script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="heading">
+            <h1 class="title">2048 - AI</h1>
+            <div class="score-container">0</div>
+        </div>
+        <p class="game-intro">Join the numbers and get to the <strong>2048 tile!</strong></p>
+        <p class="game-intro">Watch the randomizing AI attempt to solve it!</p>
+
+        <div class='controls'>
+            <div id='run-button-container'>
+                <button id='run-button' class='ai-button'>Run AI</button>
+
+                <span> AI runs per move: </span>
+                <input id="run-count" type="text" value="100">
+
+            </div>
+
+            <div id='hint-button-container'>
+                <button id='hint-button' class='ai-button'>Next move</button>
+            </div>
+            <div id='feedback-container'> </div>
+        </div>
+
+        <div class="game-container">
+            <div class="game-message">
+                <p></p>
+                <div class="lower">
+                    <a class="retry-button">Try again</a>
+                    <div class="score-sharing"></div>
+                </div>
+            </div>
+
+            <div class="grid-container">
+                <div class="grid-row">
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                </div>
+                <div class="grid-row">
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                </div>
+                <div class="grid-row">
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                </div>
+                <div class="grid-row">
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                </div>
+            </div>
+
+            <div class="tile-container">
+
+            </div>
+        </div>
+
+        <p class="game-explanation">
+            <strong class="important">How to play:</strong> Use your <strong>arrow keys</strong> to move the tiles. When two tiles with the same number touch, they <strong>merge into one!</strong>
+        </p>
+        <p class="game-explanation">
+            <strong class="important">How the AI works:</strong> The AI plays the game multiple times using completely <strong>random moves!</strong> The average end score per starting position is calculated.
+            The move with the highest score is chosen. By default the AI plays 100 games per move. <strong>Increase the run count for a stronger AI.</strong><br />
+            <br />
+            It's interesting to note that even though the AI is based on random moves, it plays quite well. <br />
+            <br />
+            Another interesting property is that the AI has <strong>no hard-coded intelligence</strong> meaning no knowledge about what makes a good move was programmed into it! It "figures it out" all by itself.</br>
+            </br>
+            For a detailed discussion <a href="http://stackoverflow.com/a/23853848/632039">see my post in StackOverflow</a>.
+        </p>
+
+        <hr>
+        <p>
+            Original game by <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli.</a>     AI infrastucture by <a href="https://github.com/ov3y/2048-AI">Matt Overlan</a>
+        </p>
+        <p>
+            AI solver by <a href="https://github.com/ronzil/2048-AI">Ronen Zilberman</a>
+        </p>
+        <div class="sharing">
+            <a href="https://twitter.com/share" class="twitter-share-button" data-text="Check out 2048, a game where you join numbers to score high! #2048game #2048ai" data-via="gabrielecirulli">Tweet</a>
+            <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+            <span class="btc-donate">
+                <a href="bitcoin:1N68Rx5HiznJ3wqAEnaf4k5SDTYUCyRvmT">
+                    <img src="meta/icon_bitcoin.png">Donate
+                </a>
+                <span class="address"><code>1N68Rx5HiznJ3wqAEnaf4k5SDTYUCyRvmT</code></span>
+            </span>
+        </div>
+    </div>
+
+    <script src="pages/js/animframe_polyfill.js"></script>
+    <script src="pages/js/hammer.min.js"></script>
+    <script src="pages/js/keyboard_input_manager.js"></script>
+    <script src="pages/js/html_actuator.js"></script>
+    <script src="pages/js/grid.js"></script>
+    <script src="pages/js/tile.js"></script>
+    <script src="pages/js/ai.js"></script>
+    <script src="pages/js/game_manager.js"></script>
+    <script src="pages/js/application.js"></script>
+
+</body>
+</html>
