@@ -4,6 +4,11 @@ from PlayerAI   import PlayerAI
 from Displayer  import Displayer
 from random       import randint
 import time
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from webdriver_manager.chrome import ChromeDriverManager
+
+#driver = webdriver.Chrome(ChromeDriverManager().install())
 
 defaultInitialTiles = 2
 defaultProbability = 0.9
@@ -31,6 +36,16 @@ class GameManager:
         self.playerAI   = None
         self.displayer  = None
         self.over       = False
+        self.url = 'https://mariamingallonmm.github.io/AI-SearchAlgorithm-A2-2048puzzle/'
+        self.driver = webdriver.Chrome(ChromeDriverManager().install())
+        self.driver.get(self.url)
+        self.body = self.driver.find_element_by_tag_name('body')
+        self.moves = {
+            0: Keys.ARROW_UP,
+        1: Keys.ARROW_DOWN,
+        2: Keys.ARROW_LEFT,
+        3: Keys.ARROW_RIGHT
+        }
 
     def setComputerAI(self, computerAI):
         self.computerAI = computerAI
@@ -120,6 +135,20 @@ class GameManager:
         cells = self.grid.getAvailableCells()
         cell = cells[randint(0, len(cells) - 1)]
         self.grid.setCellValue(cell, tileValue)
+
+    def getGrid(self) -> Grid:
+        matrix = [[0 for i in range(4)] for j in range(4)]
+        tiles = self.driver.find_elements_by_class_name('tile')
+        
+        for tile in tiles:
+            cls = tile.get_attribute('class')
+            col, row = cls.split('tile-position-')[1].split(' ')[0].split('-')
+            col, row = int(col)-1, int(row)-1
+            num = int(cls.split('tile tile-')[1].split(' ')[0])
+            if num > matrix[row][col]:
+                matrix[row][col] = num
+        
+        return Grid(matrix)
 
 def main():
     gameManager = GameManager()
