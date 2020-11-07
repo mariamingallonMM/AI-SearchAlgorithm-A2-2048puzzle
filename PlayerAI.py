@@ -5,6 +5,8 @@ from Grid import Grid
 from sys import maxsize as MAX_INT
 import math
 import time
+from array import *
+from itertools import chain
 
 
 class PlayerAI(BaseAI):
@@ -32,7 +34,7 @@ class PlayerAI(BaseAI):
                     moving.append(direction)
                     scores.append(self.utility(gridcopy))
             evaluated = list(zip(scores, children, moving))
-            sorted(evaluated, key=lambda x: x[0], reverse=False)
+            evaluated = sorted(evaluated, key=lambda x: x[0], reverse=True)
             return evaluated
         if minmax == "min":
             for cell in grid.getAvailableCells():
@@ -44,64 +46,65 @@ class PlayerAI(BaseAI):
                     children.append(gridcopy)
                     scores.append(self.utility(gridcopy))
             evaluated = list(zip(scores, children))
-            sorted(evaluated, key=lambda x: x[0], reverse=True)
+            evaluated = sorted(evaluated, key=lambda x: x[0], reverse=False)
             return evaluated
 
 
-    def middle(self, L) -> int:
-        L = sorted(L)
-        n = int(len(L)/2)
-        m = int((n - 1) / 2)
-        return int((L[n] + L[m]) / 2)
-
-    
+  
     def utility(self, grid: Grid) -> int:
         """
         This method evaluates “how good” our game grid is by calculating:
-        how many tiles of same value,
-        how close to each other,
-        highest tile,
-        number of non-zero elements.
+        ## how many tiles are zero
+        ## 
         """
-        #how many tiles are non-zero
-        count = 0
-        #how many tiles are zero
-        count_0 = 0
-        #sum all the tiles which are non-zero
-        sum = 0
-        #sum all tiles per column
-        sum_col = 0
-        sum_cols = []
-        #list of all tile values
-        tileval = []
-        #count number of cells with adjacent values being same
-        adjCellCount = 0
-        adjCellValues = [1]
         #clone the current grid to avoid modifying after using .move() on it
         gridCopy = grid.clone()
+        
         #establish weights for each heuristics
-        w1 = 10
-        w2 = 0
-        w3 = 2000 #weight for tile of max value
-        w4 = 0
-        w5 = 10000 #weight for number of zeros
+        w1 = 100000 #value of topleft corner tile
+        w2 = 10 #max tile value
+        w3 = 0 #sum of all tiles
+        w4 = 200 #sum of first column
+        w5 = 10 #how many tiles are zeros
+        w6 = 100000 #max tile is at corner
 
-        for i in range(grid.size):
-            for j in range(grid.size):
-                sum += grid.map[i][j]
-                tileval.append(grid.map[i][j])
-                if grid.map[i][j] != 0:
-                    count += 1
-                if grid.map[i][j] == 0:
-                    count_0 += 1
-                sum_col += sum
-                sum_cols.append(sum_col)
-        max_tile = max(tileval)
-        upleft_corner = grid.map[0][0]
-        sum_corners = grid.map[0][0]+(grid.map[0][1]+grid.map[1][0])
-        max_sum_cols = 0 #max(sum(grid.map[0]),sum(grid.map[1]),sum(grid.map[2]),sum(grid.map[3]))
+        weigths = [w1, w2, w3, w4, w5, w6]
 
-        return int(w1 * (sum) + w2* sum_corners + w3 * (max_tile) + w4 * upleft_corner + w5 * count_0) #+ w4 * (adjCellCount + max_adjCellCount)
+        #define heuristics used
+        #value of top left corner
+        topleft_corner = int(grid.map[0][0])
+        #max tile value
+        tileval = tuple(chain.from_iterable(grid.map))
+        #sum value of all tiles which are non-zero
+        sum = int(math.fsum(tileval))
+        max_tile = max(list(tileval))
+        #sum of tiles in first column
+        max_sum_col1 = grid.map[0][0] + grid.map[1][0] + grid.map[2][0] + grid.map[3][0]
+        #how many tiles are zero
+        count_0 = len([x for x in list(tileval) if x == 0])
+        #max tile is at corner, start with '0'
+        max_tile_topleft_corner = 0
+        if int(grid.map[0][0]) == int(max_tile):
+            max_tile_topleft_corner = 1
+        #second max tile is near the corner
+        second_max_tile_topleft_corner = 0
+        list(tileval).remove(int(max_tile))
+        second_max_tile = max(tileval)
+        if int(grid.map[1][0]) == int(max_tile):
+            max_tile_topleft_corner += 1
+        #second max tile is near corner (at first column, second row)
+        if int(grid.map[0][1]) == int(second_max_tile):
+            max_tile_topleft_corner += 1
+        if int(grid.map[1][1]) == int(second_max_tile):
+            max_tile_topleft_corner += 1
+        #bonus if tiles near corner are exact max_tile too so they merge
+        #if int(grid.map[1][0]) and int(grid.map[0][1]) and int(grid.map[1][1]) == int(max_tile):
+        #    max_tile_topleft_corner += 2
+
+        heuristics = [topleft_corner, max_tile, sum, max_sum_col1, count_0, max_tile_topleft_corner]
+
+        return int(math.fsum([a * b for a, b in zip(weigths, heuristics)]))
+        #return int(w1 * sum + w2* topleft_corner + w3 * max_tile + w4 * max_sum_col1 + w5 * count_0 + w6 * max_tile_topleft_corner)
 
     
     def maximise(self, grid: Grid, a: int, b: int, d: int)-> Tuple[Grid, int, int]:
@@ -189,7 +192,7 @@ class PlayerAI(BaseAI):
                 return (minChild, minUtility)
 
 
-    def getMove(self, grid: Grid, depth: int = 10) -> int:
+    def getMove(self, grid: Grid, depth: int = 20) -> int:
          timeLimit = 0.2
          prevTime = time.process_time()
          while time.process_time() - prevTime < timeLimit:

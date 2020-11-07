@@ -16,7 +16,6 @@ class Grid:
 
         return gridCopy
 
-
     # Insert a Tile in an Empty Cell
     def insertTile(self, pos, value):
         self.setCellValue(pos, value)
