@@ -1,30 +1,29 @@
-from random import randint
+#from random import randint
 from BaseAI import BaseAI
 from typing import Tuple, List
 from Grid import Grid
 from sys import maxsize as MAX_INT
 import math
 import time
-from array import *
+#from array import *
 from itertools import chain
 
 
 class PlayerAI(BaseAI):
 
-    global MIN_INT
+    global MIN_INT, timeLimit
     MIN_INT = -MAX_INT - 1
+    timeLimit = 0.2
+
        
-    def getChildren(self, grid, minmax: str) -> Tuple[int, Grid, int]:
+    def getChildren(self, grid: Grid, minmax: str) -> Tuple[int, Grid, int]:
         """gets all children and the moving directions for max player
            gets all empty cells and attempts new tiles configurations for "2" and "4" for min player
         """
-        children = []
-        moving = []
-        scores = []
+        children, moving, scores = ([] for _ in range(3))
 
         if minmax == "max":
             for direction in grid.getAvailableMoves():
-                #print(grid.getAvailableMoves())
                 #clone the current grid here to avoid loosing it after .move()
                 gridcopy = grid.clone()
                 #move method returns True if moved and makes the change to gridcopy itself
@@ -33,9 +32,9 @@ class PlayerAI(BaseAI):
                     children.append(gridcopy)
                     moving.append(direction)
                     scores.append(self.utility(gridcopy))
-            evaluated = list(zip(scores, children, moving))
-            evaluated = sorted(evaluated, key=lambda x: x[0], reverse=True)
-            return evaluated
+            #evaluated = 
+            #evaluated = 
+            return sorted(list(zip(scores, children, moving)), key=lambda x: x[0], reverse=True)
         if minmax == "min":
             for cell in grid.getAvailableCells():
                 #insert a new tile "2" and "4" in empty cell to cover this posibility
@@ -45,81 +44,73 @@ class PlayerAI(BaseAI):
                     gridcopy.insertTile(cell, tile)
                     children.append(gridcopy)
                     scores.append(self.utility(gridcopy))
-            evaluated = list(zip(scores, children))
-            evaluated = sorted(evaluated, key=lambda x: x[0], reverse=False)
-            return evaluated
+            #evaluated = 
+            #evaluated = 
+            return sorted(list(zip(scores, children)), key=lambda x: x[0], reverse=False)
 
 
   
     def utility(self, grid: Grid) -> int:
         """
-        This method evaluates “how good” our game grid is by calculating:
-        ## how many tiles are zero
-        ## 
+        This method evaluates “how good” our game grid is by using the following heuristics:
+        # value of topleft corner tile
+        # max tile value
+        # sum of all tiles
+        # sum of first column
+        # how many tiles are zeros
+        # max tile is at topleft corner
+        # second max tile are near topleft corner
         """
         #clone the current grid to avoid modifying after using .move() on it
         gridCopy = grid.clone()
         
         #establish weights for each heuristics
         w1 = 100000 #value of topleft corner tile
-        w2 = 10 #max tile value
+        w2 = 20 #max tile value
         w3 = 0 #sum of all tiles
-        w4 = 200 #sum of first column
-        w5 = 10 #how many tiles are zeros
+        w4 = 100 #sum of first column
+        w5 = 50 #how many tiles are zeros
         w6 = 100000 #max tile is at corner
 
         weigths = [w1, w2, w3, w4, w5, w6]
 
-        #define heuristics used
-        #value of top left corner
-        topleft_corner = int(grid.map[0][0])
-        #max tile value
-        tileval = tuple(chain.from_iterable(grid.map))
-        #sum value of all tiles which are non-zero
-        sum = int(math.fsum(tileval))
-        max_tile = max(list(tileval))
-        #sum of tiles in first column
-        max_sum_col1 = grid.map[0][0] + grid.map[1][0] + grid.map[2][0] + grid.map[3][0]
-        #how many tiles are zero
-        count_0 = len([x for x in list(tileval) if x == 0])
-        #max tile is at corner, start with '0'
-        max_tile_topleft_corner = 0
+        ## Define heuristics used:
+
+        topleft_corner = int(grid.map[0][0])    #value of top left corner
+        tileval = tuple(chain.from_iterable(grid.map))  #max tile value
+        sum = int(math.fsum(tileval))   #sum value of all tiles which are non-zero
+        max_tile = max(list(tileval))   #sum of tiles in first column
+        max_sum_col1 = grid.map[0][0] + grid.map[1][0] + grid.map[2][0] + grid.map[3][0] #sum of tiles in first column
+        count_0 = len([x for x in list(tileval) if x == 0]) #how many tiles are zero
+        max_tile_topleft_corner = 0 #max tile is at corner, start with '0'
         if int(grid.map[0][0]) == int(max_tile):
             max_tile_topleft_corner = 1
         #second max tile is near the corner
-        second_max_tile_topleft_corner = 0
         list(tileval).remove(int(max_tile))
         second_max_tile = max(tileval)
         if int(grid.map[1][0]) == int(max_tile):
             max_tile_topleft_corner += 1
         #second max tile is near corner (at first column, second row)
-        if int(grid.map[0][1]) == int(second_max_tile):
+        if int(grid.map[0][1]) or int(grid.map[1][1]) == int(second_max_tile):
             max_tile_topleft_corner += 1
-        if int(grid.map[1][1]) == int(second_max_tile):
-            max_tile_topleft_corner += 1
-        #bonus if tiles near corner are exact max_tile too so they merge
-        #if int(grid.map[1][0]) and int(grid.map[0][1]) and int(grid.map[1][1]) == int(max_tile):
-        #    max_tile_topleft_corner += 2
+        #if int(grid.map[0][1]) and int(grid.map[1][1]) == int(second_max_tile):
+        #    max_tile_topleft_corner += 1
 
         heuristics = [topleft_corner, max_tile, sum, max_sum_col1, count_0, max_tile_topleft_corner]
 
         return int(math.fsum([a * b for a, b in zip(weigths, heuristics)]))
-        #return int(w1 * sum + w2* topleft_corner + w3 * max_tile + w4 * max_sum_col1 + w5 * count_0 + w6 * max_tile_topleft_corner)
-
     
     def maximise(self, grid: Grid, a: int, b: int, d: int)-> Tuple[Grid, int, int]:
 
         """
         This is the max method representing PlayerAI from the minimax algorithm takes the following parameters:
         grid: is an object of the Grid class
-        a: alpha from α-β pruning
-        b: beta from α-β pruning
-        d: maximum allowed depth
+        a, b: alpha and beta from α-β pruning
+        d: maximum allowed depth (how many games ahead we let the AI algorithm see and evaluate)
         returns: a tuple of the form (maxChild, maxUtility, move), where:
-                    maxChild is the children of the current grid object (in the minimax algorithm tree) 
-                    that maximizes the utility, and 
-                    maxUtility is the utility value of maxChild game grid.
-                    move is the move of the child object
+                maxChild: is children of current grid object (in minimax algorithm tree) that maximizes the utility, 
+                maxUtility: is the utility value of maxChild game grid, and
+                move: is the move of the child object.
         """
         # at the beginning we set maxUtility to (-sys.maxint - 1) and maxChild to None
         (maxChild, maxUtility, move) = (None, MIN_INT, -1)
@@ -128,7 +119,7 @@ class PlayerAI(BaseAI):
             return (None, self.utility(grid), -1)
         if d == 0:
             return (None, self.utility(grid), -1)
-        d -= 1
+        d -= 1 #reduce depth recursively until d == 0 to generate the children
 
         #if no children are generated, stop here
         if not self.getChildren(grid, "max"):
@@ -152,17 +143,14 @@ class PlayerAI(BaseAI):
     def minimise(self, grid: Grid, a: int, b: int, d: int)-> Tuple[Grid, int]:
 
         """
-        This is the min method from the minimax algorithm representing the ComputerAI player
-        and takes the following parameters:
+        This is the min method from the minimax algorithm representing the ComputerAI player and takes the following parameters:
         grid: is an object of the Grid class
-        a: alpha from α-β pruning
-        b: beta from α-β pruning
-        d: maximum allowed depth
+        a, b: alpha and beta from α-β pruning
+        d: maximum allowed depth (how many games ahead we let the AI algorithm see and evaluate)
 
         returns: a tuple of the form (minChild, minUtility), where:
-                    minChild is the children of the current grid object (in the minimax algorithm tree) 
-                    that minimises the utility, and 
-                    minUtility is the utility value of minChild game grid.
+                minChild is children of current grid object (in the minimax algorithm tree) that minimises the utility, and 
+                minUtility is the utility value of minChild game grid.
         """
 
         # at the begining we set minUtility to the max it can be ('MAX_INT') and minChild to None
@@ -193,11 +181,20 @@ class PlayerAI(BaseAI):
 
 
     def getMove(self, grid: Grid, depth: int = 20) -> int:
-         timeLimit = 0.2
-         prevTime = time.process_time()
-         while time.process_time() - prevTime < timeLimit:
-            (child, utility, bestmove) = self.maximise(grid, MIN_INT, MAX_INT, depth)
-            print("utility: ", utility, sep=' ')
-            print("bestmove: ", bestmove, sep=' ')
-            return bestmove
 
+        """
+        Gets the best move for PlayerAI for a given:
+        grid: an object of the class Grid
+        depth: the depth of the tree to generate, how many games ahead does PlayerAI see to take decision
+        returns:
+            bestmove: an integer from [0,1,2,3] indicating whether to move ["UP", "DOWN", "LEFT","RIGHT"]
+            depending on the resulting best move from applying minimax method
+        """
+        # specifiy a time limit for PlayerAI move
+        prevTime = time.process_time()
+
+        while time.process_time() - prevTime < timeLimit:
+            (child, utility, bestmove) = self.maximise(grid, MIN_INT, MAX_INT, depth)
+            print("Utility: ", utility, sep=' ', end='\n')
+            print("Bestmove: ", bestmove, sep=' ', end='\n')
+            return bestmove
