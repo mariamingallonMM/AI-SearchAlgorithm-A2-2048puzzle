@@ -54,5 +54,6 @@ The following references have been instrumental in understanding alpha-beta prun
 - Started trying to implement an index.html to show the PlayerAI on:
 https://mariamingallonmm.github.io/AI-SearchAlgorithm-A2-2048puzzle/
 - It could be similar to how it is done in this article using Selenium: https://towardsdatascience.com/how-to-control-the-game-board-of-2048-ec2793db3fa9 & github: https://github.com/lazuxd/playing-2048-with-minimax.
+- Notes to consider when using Selenium: https://www.browserstack.com/guide/run-selenium-tests-using-selenium-chromedriver
 - Reference for Selenium: [Selenium WebDriver: Browse the Web with Code](https://medium.com/towards-artificial-intelligence/selenium-webdriver-browse-the-web-with-code-f064d3556a8)
 - An alternative could be using Flask.
