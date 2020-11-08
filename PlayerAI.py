@@ -30,8 +30,6 @@ class PlayerAI(BaseAI):
                     children.append(gridcopy)
                     moving.append(direction)
                     scores.append(self.utility(gridcopy))
-            #evaluated = 
-            #evaluated = 
             return sorted(list(zip(scores, children, moving)), key=lambda x: x[0], reverse=True)
         if minmax == "min":
             for cell in grid.getAvailableCells():
@@ -42,8 +40,6 @@ class PlayerAI(BaseAI):
                     gridcopy.insertTile(cell, tile)
                     children.append(gridcopy)
                     scores.append(self.utility(gridcopy))
-            #evaluated = 
-            #evaluated = 
             return sorted(list(zip(scores, children)), key=lambda x: x[0], reverse=False)
 
 
@@ -64,10 +60,10 @@ class PlayerAI(BaseAI):
         
         #establish weights for each heuristics
         w1 = 100000 #value of topleft corner tile
-        w2 = 20 #max tile value
-        w3 = 0 #sum of all tiles
-        w4 = 50 #sum of first column
-        w5 = 50 #how many tiles are zeros
+        w2 = 10 #max tile value
+        w3 = 0 #sum of all tiles divided by non-empty tiles
+        w4 = 0 #sum of first column
+        w5 = 100 #how many tiles are zeros
         w6 = 100000 #max tile is at corner
 
         weigths = [w1, w2, w3, w4, w5, w6]
@@ -86,15 +82,17 @@ class PlayerAI(BaseAI):
         #second max tile is near the corner
         list(tileval).remove(int(max_tile))
         second_max_tile = max(tileval)
-        if int(grid.map[1][0]) == int(max_tile):
+        if int(grid.map[1][0]) == int(second_max_tile):
             max_tile_topleft_corner += 1
-        #second max tile is near corner (at first column, second row)
-        if int(grid.map[0][1]) or int(grid.map[1][1]) == int(second_max_tile):
+        if int(grid.map[0][1]) == int(second_max_tile):
             max_tile_topleft_corner += 1
-        #if int(grid.map[0][1]) and int(grid.map[1][1]) == int(second_max_tile):
+        #second max tile is near corner
+        if int(grid.map[0][1]) and int(grid.map[1][0]) == int(second_max_tile):
+            max_tile_topleft_corner += 1
+        #if int(grid.map[0][1]) == int(second_max_tile):
         #    max_tile_topleft_corner += 1
 
-        heuristics = [topleft_corner, max_tile, sum, max_sum_col1, count_0, max_tile_topleft_corner]
+        heuristics = [topleft_corner, max_tile, sum // (16 - count_0), max_sum_col1, count_0, max_tile_topleft_corner]
 
         return int(math.fsum([a * b for a, b in zip(weigths, heuristics)]))
     
@@ -188,7 +186,7 @@ class PlayerAI(BaseAI):
             bestmove: an integer from [0,1,2,3] indicating whether to move ["UP", "DOWN", "LEFT","RIGHT"]
             depending on the resulting best move from applying minimax method
         """
-        # specifiy a time limit for PlayerAI move
+        # get time for time limit of PlayerAI move
         prevTime = time.process_time()
 
         while time.process_time() - prevTime < timeLimit:
