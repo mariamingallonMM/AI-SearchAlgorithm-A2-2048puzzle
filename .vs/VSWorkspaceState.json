@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\env"
   ],
-  "SelectedNode": "\\BaseAI.py",
+  "SelectedNode": "\\env",
   "PreviewInSolutionExplorer": false
 }

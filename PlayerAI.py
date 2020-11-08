@@ -1,11 +1,9 @@
-#from random import randint
 from BaseAI import BaseAI
 from typing import Tuple, List
 from Grid import Grid
 from sys import maxsize as MAX_INT
 import math
 import time
-#from array import *
 from itertools import chain
 
 
@@ -68,7 +66,7 @@ class PlayerAI(BaseAI):
         w1 = 100000 #value of topleft corner tile
         w2 = 20 #max tile value
         w3 = 0 #sum of all tiles
-        w4 = 100 #sum of first column
+        w4 = 50 #sum of first column
         w5 = 50 #how many tiles are zeros
         w6 = 100000 #max tile is at corner
 
