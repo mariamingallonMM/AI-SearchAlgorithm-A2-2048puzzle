@@ -46,7 +46,7 @@ The following references have been instrumental in understanding alpha-beta prun
 - [Understanding the Minimax Algorithm](https://towardsdatascience.com/understanding-the-minimax-algorithm-726582e4f2c6) by [Dorian Lazar](https://medium.com/@dorianlazar)
 - Series of 3 articles to implement minimax algorithm to 2048 game, [How to apply Minimax to 2048](https://towardsdatascience.com/playing-2048-with-minimax-algorithm-1-d214b136bffb) by [Dorian Lazar](https://medium.com/@dorianlazar).
 - [Visualise alpha-beta pruning and minimax](http://homepage.ufp.pt/jtorres/ensino/ia/alfabeta.html) by José Manuel Torres.
-- [Beginner’s guide to AI and writing your own bot for the 2048 game](https://medium.com/@bartoszzadrony/beginners-guide-to-ai-and-writing-your-own-bot-for-the-2048-game-4b8083faaf53) by [Bartos ZZ Adrony](https://medium.com/@bartoszzadrony).
+- [Beginner’s guide to AI and writing your own bot for the 2048 game](https://medium.com/@bartoszzadrony/beginners-guide-to-ai-and-writing-your-own-bot-for-the-2048-game-4b8083faaf53) by [Bartosz "Ripp" Zadrozny](https://medium.com/@bartoszzadrony).
 - [AI Plays 2048](http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf) by Yun Nie (yunn), Wenqi Hou (wenqihou), Yicheng An (yicheng) from CS229, Stanford University.
 
 ## Future development
